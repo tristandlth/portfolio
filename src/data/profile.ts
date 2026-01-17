@@ -60,7 +60,7 @@ export const profile: Profile = {
     photoUrl: '/images/photo.jpg',
     available: true,
     availableText: 'Disponible pour de nouveaux projets',
-    cvUrl: '/public/CV.pdf',
+    cvUrl: '/pdf/CV.pdf',
     l_skills: [
         skillsData['Vue.js'],
         skillsData['Nuxt'],
