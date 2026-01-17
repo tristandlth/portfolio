@@ -57,7 +57,7 @@ export const skillsData: Record<string, Skill> = {
 export const profile: Profile = {
     name: 'Tristan',
     title: 'Développeur Full Stack',
-    photoUrl: '/images/photo.jpg',
+    photoUrl: '/images/photo.png',
     available: true,
     availableText: 'Disponible pour de nouveaux projets',
     cvUrl: '/pdf/CV.pdf',
