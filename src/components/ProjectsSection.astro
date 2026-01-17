@@ -1,0 +1,552 @@
+---
+import type { Project } from "../data/projects";
+
+interface Props {
+  l_projects: Project[];
+}
+
+const { l_projects } = Astro.props;
+
+const l_categories = ["Tous", ...new Set(l_projects.map((p) => p.category))];
+---
+
+<section class="projects" id="projects">
+  <div class="projects__container">
+    <header class="projects__header">
+      <span class="projects__eyebrow">Portfolio</span>
+      <h2 class="projects__title">
+        Des projets qui<br />
+        <span class="projects__title--highlight">racontent une histoire.</span>
+      </h2>
+      <p class="projects__subtitle">
+        Une sélection de projets sur lesquels j'ai travaillé, du concept à la
+        mise en production.
+      </p>
+    </header>
+
+    <div
+      class="projects__filters"
+      role="tablist"
+      aria-label="Filtrer les projets"
+    >
+      {
+        l_categories.map((category, index) => (
+          <button
+            type="button"
+            role="tab"
+            class={`projects__filter ${index === 0 ? "projects__filter--active" : ""}`}
+            data-category={category}
+            aria-selected={index === 0 ? "true" : "false"}
+          >
+            {category}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="projects__grid">
+      {
+        l_projects.map((project) => (
+          <article class="project-card" data-category={project.category}>
+            <div class="project-card__image-wrapper">
+              <img
+                src={project.imageUrl}
+                alt={`Aperçu du projet ${project.title}`}
+                class="project-card__image"
+                loading="lazy"
+              />
+              <div class="project-card__overlay">
+                <div class="project-card__links">
+                  {project.liveUrl && (
+                    <a
+                      href={project.liveUrl}
+                      class="project-card__link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Voir ${project.title} en ligne`}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                      >
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
+                      </svg>
+                    </a>
+                  )}
+                  {project.githubUrl && (
+                    <a
+                      href={project.githubUrl}
+                      class="project-card__link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Voir le code source de ${project.title}`}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div class="project-card__content">
+              <span class="project-card__category">{project.category}</span>
+              <h3 class="project-card__title">{project.title}</h3>
+              <p class="project-card__description">{project.description}</p>
+              <div class="project-card__tags">
+                {project.l_tags.map((tag) => (
+                  <span class="project-card__tag">{tag}</span>
+                ))}
+              </div>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+
+    <div class="projects__cta">
+      <p class="projects__cta-text">Vous avez un projet en tête ?</p>
+      <a href="#contact" class="btn btn--primary">
+        Discutons-en
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+  class ProjectFilter {
+    private l_filterBtns: NodeListOf<HTMLButtonElement>;
+    private l_projectCards: NodeListOf<HTMLElement>;
+
+    constructor() {
+      this.l_filterBtns = document.querySelectorAll(".projects__filter");
+      this.l_projectCards = document.querySelectorAll(".project-card");
+      this.init();
+    }
+
+    private init(): void {
+      this.l_filterBtns.forEach((btn) => {
+        btn.addEventListener("click", () => this.handleFilter(btn));
+      });
+    }
+
+    private handleFilter(o_activeBtn: HTMLButtonElement): void {
+      const category = o_activeBtn.dataset.category;
+
+      this.l_filterBtns.forEach((btn) => {
+        btn.classList.remove("projects__filter--active");
+        btn.setAttribute("aria-selected", "false");
+      });
+      o_activeBtn.classList.add("projects__filter--active");
+      o_activeBtn.setAttribute("aria-selected", "true");
+
+      this.l_projectCards.forEach((card) => {
+        const cardCategory = card.dataset.category;
+        const shouldShow = category === "Tous" || cardCategory === category;
+
+        if (shouldShow) {
+          card.style.display = "";
+          requestAnimationFrame(() => {
+            card.style.opacity = "1";
+            card.style.transform = "translateY(0)";
+          });
+        } else {
+          card.style.opacity = "0";
+          card.style.transform = "translateY(20px)";
+          setTimeout(() => {
+            card.style.display = "none";
+          }, 300);
+        }
+      });
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    new ProjectFilter();
+  });
+</script>
+
+<style>
+  .projects {
+    padding: 8rem 2rem;
+  }
+
+  .projects__container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .projects__header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .projects__eyebrow {
+    display: inline-block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #0071e3;
+    margin-bottom: 1rem;
+  }
+
+  .projects__title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: #1d1d1f;
+    margin-bottom: 1rem;
+  }
+
+  .projects__title--highlight {
+    background: linear-gradient(135deg, #0071e3 0%, #5856d6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .projects__subtitle {
+    font-size: 1.125rem;
+    color: #6e6e73;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .projects__filters {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .projects__filter {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6e6e73;
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 980px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .projects__filter:hover {
+    color: #1d1d1f;
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .projects__filter--active {
+    color: #fff;
+    background: #1d1d1f;
+    border-color: #1d1d1f;
+  }
+
+  .projects__filter--active:hover {
+    color: #fff;
+  }
+
+  .projects__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .project-card {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .project-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+  }
+
+  .project-card__image-wrapper {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%);
+  }
+
+  .project-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .project-card:hover .project-card__image {
+    transform: scale(1.05);
+  }
+
+  .project-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .project-card:hover .project-card__overlay {
+    opacity: 1;
+  }
+
+  .project-card__links {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .project-card__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .project-card__link:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.1);
+  }
+
+  .project-card__link svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .project-card__content {
+    padding: 1.5rem;
+  }
+
+  .project-card__category {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #0071e3;
+    margin-bottom: 0.5rem;
+  }
+
+  .project-card__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .project-card__description {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #6e6e73;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .project-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .project-card__tag {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6e6e73;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 0.375rem 0.75rem;
+    border-radius: 980px;
+  }
+
+  .projects__cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .projects__cta-text {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #1d1d1f;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 980px;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    transition: transform 0.2s ease;
+  }
+
+  .btn:hover svg {
+    transform: translateX(4px);
+  }
+
+  .btn--primary {
+    background: #0071e3;
+    color: #fff;
+    border: none;
+  }
+
+  .btn--primary: hover;{
+    background: #0077ed;
+    transform: scale(1.02);
+  }
+
+  .btn--primary:active {
+  transform: scale(0.98);
+  }
+  :global([data-theme='dark']) .projects {
+  }
+  :global([data-theme='dark']) .projects__eyebrow {
+    color: #2997ff;
+  }
+  :global([data-theme='dark']) .projects__title {
+    color: #f5f5f7;
+  }
+  :global([data-theme='dark']) .projects__title--highlight {
+    background: linear-gradient(135deg, #2997ff 0%, #8a8aff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  :global([data-theme='dark']) .projects__subtitle {
+    color: #a1a1a6;
+  }
+  :global([data-theme='dark']) .projects__filter {
+    color: #a1a1a6;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  :global([data-theme='dark']) .projects__filter:hover {
+    color: #f5f5f7;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  :global([data-theme='dark']) .projects__filter--active {
+    color: #000;
+    background: #f5f5f7;
+    border-color: #f5f5f7;
+  }
+  :global([data-theme='dark']) .projects__filter--active:hover {
+    color: #000;
+  }
+  :global([data-theme='dark']) .project-card {
+    background: rgba(29, 29, 31, 0.72);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  :global([data-theme='dark']) .project-card:hover {
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4);
+  }
+  :global([data-theme='dark']) .project-card__image-wrapper {
+    background: linear-gradient(135deg, #1d1d1f 0%, #2c2c2e 100%);
+  }
+  :global([data-theme='dark']) .project-card__category {
+    color: #2997ff;
+  }
+  :global([data-theme='dark']) .project-card__title {
+    color: #f5f5f7;
+  }
+  :global([data-theme='dark']) .project-card__description {
+    color: #a1a1a6;
+  }
+  :global([data-theme='dark']) .project-card__tag {
+    color: #a1a1a6;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  :global([data-theme='dark']) .projects__cta {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+  :global([data-theme='dark']) .projects__cta-text {
+    color: #f5f5f7;
+  }
+  :global([data-theme='dark']) .btn--primary {
+    background: #2997ff;
+  }
+  :global([data-theme='dark']) .btn--primary:hover {
+    background: #40a9ff;
+  }
+  @media (max-width: 1024px) {
+    .projects__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    }
+    @media (max-width: 768px) {
+    .projects {
+      padding: 6rem 1.5rem;
+    }
+    .projects__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .projects__filters {
+      gap: 0.375rem;
+    }
+
+    .projects__filter {
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+    }
+  }
+  @media (max-width: 480px) {
+    .project-card__content {
+      padding: 1.25rem;
+    }
+
+    .project-card__title {
+      font-size: 1.125rem;
+    }
+  }
+  </style>

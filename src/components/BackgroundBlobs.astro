@@ -1,0 +1,97 @@
+---
+/**
+ * BackgroundBlobs.astro
+ * Arrière-plan avec formes organiques flottantes
+ */
+---
+
+<div class="blobs" aria-hidden="true">
+  <div class="blob blob--1"></div>
+  <div class="blob blob--2"></div>
+  <div class="blob blob--3"></div>
+  <div class="blob blob--4"></div>
+  <div class="blob blob--5"></div>
+</div>
+
+<style>
+  .blobs {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.35;
+  }
+
+  .blob--1 {
+    width: 800px;
+    height: 800px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    top: -20%;
+    right: -10%;
+  }
+
+  .blob--2 {
+    width: 600px;
+    height: 600px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    top: 30%;
+    left: -15%;
+  }
+
+  .blob--3 {
+    width: 500px;
+    height: 500px;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    top: 60%;
+    right: -5%;
+  }
+
+  .blob--4 {
+    width: 700px;
+    height: 700px;
+    background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+    bottom: -10%;
+    left: 20%;
+  }
+
+  .blob--5 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    bottom: 10%;
+    right: 30%;
+  }
+
+  /* Mode sombre */
+  :global([data-theme="dark"]) .blob {
+    opacity: 0.12;
+    filter: blur(150px);
+  }
+
+  :global([data-theme="dark"]) .blob--1 {
+    background: linear-gradient(135deg, #2997ff 0%, #5856d6 100%);
+  }
+
+  :global([data-theme="dark"]) .blob--2 {
+    background: linear-gradient(135deg, #5856d6 0%, #af52de 100%);
+  }
+
+  :global([data-theme="dark"]) .blob--3 {
+    background: linear-gradient(135deg, #2997ff 0%, #64d2ff 100%);
+  }
+
+  :global([data-theme="dark"]) .blob--4 {
+    background: linear-gradient(135deg, #5856d6 0%, #bf5af2 100%);
+  }
+
+  :global([data-theme="dark"]) .blob--5 {
+    background: linear-gradient(135deg, #2997ff 0%, #5856d6 100%);
+  }
+</style>
