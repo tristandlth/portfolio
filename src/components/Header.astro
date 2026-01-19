@@ -4,16 +4,33 @@ import { l_navLinks } from "../data/navigation";
 
 <header class="header">
   <nav class="header__nav">
-    {
-      l_navLinks.map((link) => (
-        <a href={link.href} class="header__link">
-          {link.label}
-        </a>
-      ))
-    }
+    <!-- Menu burger (mobile uniquement) -->
+    <button
+      type="button"
+      class="burger-toggle"
+      id="burger-toggle"
+      aria-label="Toggle menu"
+      aria-expanded="false"
+    >
+      <span class="burger-toggle__line"></span>
+      <span class="burger-toggle__line"></span>
+      <span class="burger-toggle__line"></span>
+    </button>
+
+    <!-- Navigation links -->
+    <div class="header__links" id="nav-links">
+      {
+        l_navLinks.map((link) => (
+          <a href={link.href} class="header__link">
+            {link.label}
+          </a>
+        ))
+      }
+    </div>
 
     <span class="header__separator" aria-hidden="true"></span>
 
+    <!-- Theme toggle -->
     <button
       type="button"
       class="theme-toggle"
@@ -49,6 +66,9 @@ import { l_navLinks } from "../data/navigation";
 </header>
 
 <script>
+  /**
+   * Gestionnaire du thème clair/sombre
+   */
   class ThemeManager {
     private readonly STORAGE_KEY = "theme";
 
@@ -56,6 +76,9 @@ import { l_navLinks } from "../data/navigation";
       this.bindEvents();
     }
 
+    /**
+     * Lie les événements pour le toggle de thème
+     */
     private bindEvents(): void {
       document
         .getElementById("theme-toggle")
@@ -70,6 +93,10 @@ import { l_navLinks } from "../data/navigation";
         });
     }
 
+    /**
+     * Définit le thème actif
+     * @param theme - Le thème à appliquer
+     */
     private setTheme(theme: "light" | "dark"): void {
       const o_root = document.documentElement;
       o_root.classList.remove("light", "dark");
@@ -77,6 +104,9 @@ import { l_navLinks } from "../data/navigation";
       o_root.setAttribute("data-theme", theme);
     }
 
+    /**
+     * Bascule entre les thèmes clair et sombre
+     */
     private toggle(): void {
       const isDark = document.documentElement.classList.contains("dark");
       const newTheme = isDark ? "light" : "dark";
@@ -85,7 +115,78 @@ import { l_navLinks } from "../data/navigation";
     }
   }
 
+  /**
+   * Gestionnaire du menu burger mobile
+   */
+  class BurgerMenuManager {
+    private o_burgerButton: HTMLElement | null;
+    private o_navLinks: HTMLElement | null;
+    private isOpen: boolean = false;
+
+    constructor() {
+      this.o_burgerButton = document.getElementById("burger-toggle");
+      this.o_navLinks = document.getElementById("nav-links");
+      this.bindEvents();
+    }
+
+    /**
+     * Lie les événements pour le menu burger
+     */
+    private bindEvents(): void {
+      this.o_burgerButton?.addEventListener("click", () => this.toggle());
+
+      // Ferme le menu au clic sur un lien
+      this.o_navLinks?.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => this.close());
+      });
+
+      // Ferme le menu au clic en dehors
+      document.addEventListener("click", (e) => {
+        if (
+          this.isOpen &&
+          !this.o_burgerButton?.contains(e.target as Node) &&
+          !this.o_navLinks?.contains(e.target as Node)
+        ) {
+          this.close();
+        }
+      });
+    }
+
+    /**
+     * Bascule l'état du menu burger
+     */
+    private toggle(): void {
+      this.isOpen = !this.isOpen;
+      this.updateUI();
+    }
+
+    /**
+     * Ferme le menu burger
+     */
+    private close(): void {
+      this.isOpen = false;
+      this.updateUI();
+    }
+
+    /**
+     * Met à jour l'interface selon l'état du menu
+     */
+    private updateUI(): void {
+      this.o_burgerButton?.classList.toggle(
+        "burger-toggle--active",
+        this.isOpen,
+      );
+      this.o_navLinks?.classList.toggle("header__links--open", this.isOpen);
+      this.o_burgerButton?.setAttribute(
+        "aria-expanded",
+        this.isOpen.toString(),
+      );
+    }
+  }
+
+  // Initialisation des gestionnaires
   new ThemeManager();
+  new BurgerMenuManager();
 </script>
 
 <style>
@@ -111,6 +212,12 @@ import { l_navLinks } from "../data/navigation";
     box-shadow:
       0 4px 6px -1px rgba(0, 0, 0, 0.05),
       0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .header__links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   .header__link {
@@ -177,6 +284,50 @@ import { l_navLinks } from "../data/navigation";
     display: block;
   }
 
+  /* Burger menu - caché par défaut sur desktop */
+  .burger-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 0.3rem;
+  }
+
+  .burger-toggle:hover {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .burger-toggle__line {
+    width: 1.125rem;
+    height: 2px;
+    background: #1d1d1f;
+    border-radius: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Animation du burger en X */
+  .burger-toggle--active .burger-toggle__line:nth-child(1) {
+    transform: translateY(0.5rem) rotate(45deg);
+  }
+
+  .burger-toggle--active .burger-toggle__line:nth-child(2) {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  .burger-toggle--active .burger-toggle__line:nth-child(3) {
+    transform: translateY(-0.5rem) rotate(-45deg);
+  }
+
+  /* Thème sombre */
   :global([data-theme="dark"]) .header__nav {
     background: rgba(29, 29, 31, 0.72);
     border-color: rgba(255, 255, 255, 0.1);
@@ -211,6 +362,15 @@ import { l_navLinks } from "../data/navigation";
     display: none;
   }
 
+  :global([data-theme="dark"]) .burger-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  :global([data-theme="dark"]) .burger-toggle__line {
+    background: #f5f5f7;
+  }
+
+  /* Responsive mobile */
   @media (max-width: 640px) {
     .header {
       top: 1rem;
@@ -219,13 +379,62 @@ import { l_navLinks } from "../data/navigation";
     }
 
     .header__nav {
+      position: relative;
       gap: 0.125rem;
       padding: 0.25rem;
     }
 
+    /* Affiche le burger menu */
+    .burger-toggle {
+      display: flex;
+    }
+
+    /* Cache le séparateur sur mobile */
+    .header__separator {
+      display: none;
+    }
+
+    /* Menu déroulant mobile */
+    .header__links {
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      left: 50%;
+      transform: translateX(-50%) translateY(-0.5rem);
+      min-width: max-content;
+      width: auto;
+      flex-direction: column;
+      gap: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-radius: 1rem;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .header__links--open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
     .header__link {
-      padding: 0.4rem 0.75rem;
-      font-size: 0.8125rem;
+      width: 100%;
+      padding: 1rem 1.5rem;
+      font-size: 0.9375rem;
+      border-radius: 0;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .header__link:not(:last-child) {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
 
     .theme-toggle {
@@ -236,6 +445,16 @@ import { l_navLinks } from "../data/navigation";
     .theme-toggle__icon {
       width: 1rem;
       height: 1rem;
+    }
+
+    /* Thème sombre - mobile */
+    :global([data-theme="dark"]) .header__links {
+      background: rgba(29, 29, 31, 0.95);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    :global([data-theme="dark"]) .header__link:not(:last-child) {
+      border-bottom-color: rgba(255, 255, 255, 0.1);
     }
   }
 </style>
