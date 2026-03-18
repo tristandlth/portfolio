@@ -1,17 +1,16 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./src/**/*.{astro,html,js,jsx,md,mdx,ts,tsx,vue}'],
-  darkMode: 'class',
+  content: ["./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}"],
+  darkMode: ["class", '[data-theme="dark"]'],
   theme: {
     extend: {
-      colors: {
-        primary: '#007AFF',
-        'primary-dark': '#0A84FF',
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
       },
-      borderRadius: {
-        'apple': '1.25rem',
+      colors: {
+        accent: "#6366F1",
       },
     },
   },
   plugins: [],
-}
+};
