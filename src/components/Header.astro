@@ -2,56 +2,63 @@
 import { l_navLinks } from "../data/navigation";
 ---
 
-<header class="header" id="header">
-  <nav class="nav" aria-label="Navigation principale">
-    <!-- Mobile burger -->
+<header class="header">
+  <nav class="header__nav">
+    <!-- Menu burger (mobile uniquement) -->
     <button
       type="button"
-      class="burger"
-      id="burger"
-      aria-label="Ouvrir le menu"
+      class="burger-toggle"
+      id="burger-toggle"
+      aria-label="Toggle menu"
       aria-expanded="false"
-      aria-controls="nav-links"
     >
-      <span class="burger__bar"></span>
-      <span class="burger__bar"></span>
-      <span class="burger__bar"></span>
+      <span class="burger-toggle__line"></span>
+      <span class="burger-toggle__line"></span>
+      <span class="burger-toggle__line"></span>
     </button>
 
-    <!-- Nav links -->
-    <div class="nav__links" id="nav-links" role="list">
+    <!-- Navigation links -->
+    <div class="header__links" id="nav-links">
       {
         l_navLinks.map((link) => (
-          <a href={link.href} class="nav__link" role="listitem">
+          <a href={link.href} class="header__link">
             {link.label}
           </a>
         ))
       }
     </div>
 
-    <div class="nav__divider" aria-hidden="true"></div>
+    <span class="header__separator" aria-hidden="true"></span>
 
     <!-- Theme toggle -->
     <button
       type="button"
-      class="theme-btn"
-      id="theme-btn"
+      class="theme-toggle"
+      id="theme-toggle"
       aria-label="Changer le thème"
+      title="Changer le thème"
     >
-      <!-- Sun icon (visible in dark mode) -->
-      <svg class="theme-btn__icon theme-btn__icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <svg
+        class="theme-toggle__icon theme-toggle__icon--sun"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
         <circle cx="12" cy="12" r="5"></circle>
         <line x1="12" y1="1" x2="12" y2="3"></line>
         <line x1="12" y1="21" x2="12" y2="23"></line>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-        <line x1="1" y1="12" x2="3" y2="12"></line>
-        <line x1="21" y1="12" x2="23" y2="12"></line>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
       </svg>
-      <!-- Moon icon (visible in light mode) -->
-      <svg class="theme-btn__icon theme-btn__icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+
+      <svg
+        class="theme-toggle__icon theme-toggle__icon--moon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
       </svg>
     </button>
@@ -59,59 +66,127 @@ import { l_navLinks } from "../data/navigation";
 </header>
 
 <script>
-  // Theme toggle
-  const themeBtn = document.getElementById("theme-btn");
+  /**
+   * Gestionnaire du thème clair/sombre
+   */
+  class ThemeManager {
+    private readonly STORAGE_KEY = "theme";
 
-  function setTheme(theme: "light" | "dark") {
-    document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(theme);
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
+    constructor() {
+      this.bindEvents();
+    }
+
+    /**
+     * Lie les événements pour le toggle de thème
+     */
+    private bindEvents(): void {
+      document
+        .getElementById("theme-toggle")
+        ?.addEventListener("click", () => this.toggle());
+
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", (e) => {
+          if (!localStorage.getItem(this.STORAGE_KEY)) {
+            this.setTheme(e.matches ? "dark" : "light");
+          }
+        });
+    }
+
+    /**
+     * Définit le thème actif
+     * @param theme - Le thème à appliquer
+     */
+    private setTheme(theme: "light" | "dark"): void {
+      const o_root = document.documentElement;
+      o_root.classList.remove("light", "dark");
+      o_root.classList.add(theme);
+      o_root.setAttribute("data-theme", theme);
+    }
+
+    /**
+     * Bascule entre les thèmes clair et sombre
+     */
+    private toggle(): void {
+      const isDark = document.documentElement.classList.contains("dark");
+      const newTheme = isDark ? "light" : "dark";
+      this.setTheme(newTheme);
+      localStorage.setItem(this.STORAGE_KEY, newTheme);
+    }
   }
 
-  themeBtn?.addEventListener("click", () => {
-    const isDark = document.documentElement.classList.contains("dark");
-    setTheme(isDark ? "light" : "dark");
-  });
+  /**
+   * Gestionnaire du menu burger mobile
+   */
+  class BurgerMenuManager {
+    private o_burgerButton: HTMLElement | null;
+    private o_navLinks: HTMLElement | null;
+    private isOpen: boolean = false;
 
-  // Auto-update if system preference changes (only if user hasn't picked manually)
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-    if (!localStorage.getItem("theme")) {
-      setTheme(e.matches ? "dark" : "light");
+    constructor() {
+      this.o_burgerButton = document.getElementById("burger-toggle");
+      this.o_navLinks = document.getElementById("nav-links");
+      this.bindEvents();
     }
-  });
 
-  // Mobile burger menu
-  const burger = document.getElementById("burger");
-  const navLinks = document.getElementById("nav-links");
-  let menuOpen = false;
+    /**
+     * Lie les événements pour le menu burger
+     */
+    private bindEvents(): void {
+      this.o_burgerButton?.addEventListener("click", () => this.toggle());
 
-  function toggleMenu(open: boolean) {
-    menuOpen = open;
-    burger?.classList.toggle("burger--open", open);
-    navLinks?.classList.toggle("nav__links--open", open);
-    burger?.setAttribute("aria-expanded", open.toString());
+      // Ferme le menu au clic sur un lien
+      this.o_navLinks?.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => this.close());
+      });
+
+      // Ferme le menu au clic en dehors
+      document.addEventListener("click", (e) => {
+        if (
+          this.isOpen &&
+          !this.o_burgerButton?.contains(e.target as Node) &&
+          !this.o_navLinks?.contains(e.target as Node)
+        ) {
+          this.close();
+        }
+      });
+    }
+
+    /**
+     * Bascule l'état du menu burger
+     */
+    private toggle(): void {
+      this.isOpen = !this.isOpen;
+      this.updateUI();
+    }
+
+    /**
+     * Ferme le menu burger
+     */
+    private close(): void {
+      this.isOpen = false;
+      this.updateUI();
+    }
+
+    /**
+     * Met à jour l'interface selon l'état du menu
+     */
+    private updateUI(): void {
+      this.o_burgerButton?.classList.toggle(
+        "burger-toggle--active",
+        this.isOpen,
+      );
+      this.o_navLinks?.classList.toggle("header__links--open", this.isOpen);
+      this.o_burgerButton?.setAttribute(
+        "aria-expanded",
+        this.isOpen.toString(),
+      );
+    }
   }
 
-  burger?.addEventListener("click", () => toggleMenu(!menuOpen));
-
-  // Close on link click
-  navLinks?.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => toggleMenu(false));
-  });
-
-  // Close on click outside
-  document.addEventListener("click", (e) => {
-    if (menuOpen && !burger?.contains(e.target as Node) && !navLinks?.contains(e.target as Node)) {
-      toggleMenu(false);
-    }
-  });
-
-  // Scroll shadow
-  const header = document.getElementById("header");
-  window.addEventListener("scroll", () => {
-    header?.classList.toggle("header--scrolled", window.scrollY > 20);
-  }, { passive: true });
+  // Initialisation des gestionnaires
+  new ThemeManager();
+  new BurgerMenuManager();
 </script>
 
 <style>
@@ -120,179 +195,266 @@ import { l_navLinks } from "../data/navigation";
     top: 1.25rem;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 100;
-    transition: top 0.3s var(--ease-out);
+    z-index: 1000;
+    padding: 0.125rem;
   }
 
-  .nav {
+  .header__nav {
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    padding: 0.375rem 0.5rem;
-    background: var(--nav-bg);
-    backdrop-filter: saturate(200%) blur(20px);
-    -webkit-backdrop-filter: saturate(200%) blur(20px);
-    border: 1px solid var(--nav-border);
-    border-radius: var(--radius-full);
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.3s var(--ease-out), background 0.3s var(--ease-out);
+    padding: 0.375rem;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-radius: 980px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.05),
+      0 2px 4px -2px rgba(0, 0, 0, 0.05);
   }
 
-  .header--scrolled .nav {
-    box-shadow: var(--shadow);
-  }
-
-  .nav__links {
+  .header__links {
     display: flex;
     align-items: center;
-    gap: 0.125rem;
+    gap: 0.25rem;
   }
 
-  .nav__link {
-    padding: 0.5rem 0.875rem;
+  .header__link {
+    padding: 0.5rem 1rem;
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--text-muted);
+    color: #1d1d1f;
     text-decoration: none;
-    border-radius: var(--radius-full);
+    border-radius: 980px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     letter-spacing: -0.01em;
-    transition: background 0.2s var(--ease-out), color 0.2s var(--ease-out);
   }
 
-  .nav__link:hover {
-    background: var(--bg-muted);
-    color: var(--text);
+  .header__link:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #000;
   }
 
-  .nav__divider {
+  .header__link:active {
+    transform: scale(0.97);
+  }
+
+  .header__separator {
     width: 1px;
     height: 1.25rem;
-    background: var(--border);
+    background: rgba(0, 0, 0, 0.1);
     margin: 0 0.25rem;
-    flex-shrink: 0;
   }
 
-  /* Theme button */
-  .theme-btn {
+  .theme-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 2.25rem;
     height: 2.25rem;
+    padding: 0;
     background: transparent;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    color: var(--text-muted);
-    transition: background 0.2s var(--ease-out), color 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #1d1d1f;
   }
 
-  .theme-btn:hover {
-    background: var(--bg-muted);
-    color: var(--text);
+  .theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.06);
   }
 
-  .theme-btn:active {
-    transform: scale(0.9);
+  .theme-toggle:active {
+    transform: scale(0.92);
   }
 
-  .theme-btn__icon {
-    width: 1rem;
-    height: 1rem;
-    transition: opacity 0.2s, transform 0.3s var(--ease-spring);
+  .theme-toggle__icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Default: light mode → show moon, hide sun */
-  .theme-btn__icon--sun { display: none; }
-  .theme-btn__icon--moon { display: block; }
+  .theme-toggle__icon--moon {
+    display: none;
+  }
 
-  [data-theme="dark"] .theme-btn__icon--sun { display: block; }
-  [data-theme="dark"] .theme-btn__icon--moon { display: none; }
+  .theme-toggle__icon--sun {
+    display: block;
+  }
 
-  /* Burger — hidden on desktop */
-  .burger {
+  /* Burger menu - caché par défaut sur desktop */
+  .burger-toggle {
     display: none;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 5px;
     width: 2.25rem;
     height: 2.25rem;
+    padding: 0;
     background: transparent;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    transition: background 0.2s var(--ease-out);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 0.3rem;
   }
 
-  .burger:hover { background: var(--bg-muted); }
+  .burger-toggle:hover {
+    background: rgba(0, 0, 0, 0.06);
+  }
 
-  .burger__bar {
+  .burger-toggle__line {
     width: 1.125rem;
-    height: 1.5px;
-    background: var(--text);
+    height: 2px;
+    background: #1d1d1f;
     border-radius: 2px;
-    transition: transform 0.3s var(--ease-out), opacity 0.3s var(--ease-out);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* X animation when open */
-  .burger--open .burger__bar:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
-  .burger--open .burger__bar:nth-child(2) { opacity: 0; transform: scaleX(0); }
-  .burger--open .burger__bar:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+  /* Animation du burger en X */
+  .burger-toggle--active .burger-toggle__line:nth-child(1) {
+    transform: translateY(0.5rem) rotate(45deg);
+  }
 
-  /* ─── Mobile ─────────────────────────────────── */
+  .burger-toggle--active .burger-toggle__line:nth-child(2) {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
 
+  .burger-toggle--active .burger-toggle__line:nth-child(3) {
+    transform: translateY(-0.5rem) rotate(-45deg);
+  }
+
+  /* Thème sombre */
+  :global([data-theme="dark"]) .header__nav {
+    background: rgba(29, 29, 31, 0.72);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  :global([data-theme="dark"]) .header__link {
+    color: #f5f5f7;
+  }
+
+  :global([data-theme="dark"]) .header__link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+
+  :global([data-theme="dark"]) .header__separator {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  :global([data-theme="dark"]) .theme-toggle {
+    color: #f5f5f7;
+  }
+
+  :global([data-theme="dark"]) .theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  :global([data-theme="dark"]) .theme-toggle__icon--moon {
+    display: block;
+  }
+
+  :global([data-theme="dark"]) .theme-toggle__icon--sun {
+    display: none;
+  }
+
+  :global([data-theme="dark"]) .burger-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  :global([data-theme="dark"]) .burger-toggle__line {
+    background: #f5f5f7;
+  }
+
+  /* Responsive mobile */
   @media (max-width: 640px) {
     .header {
       top: 1rem;
       width: calc(100% - 2rem);
-      max-width: 400px;
+      max-width: fit-content;
     }
 
-    .nav { position: relative; }
+    .header__nav {
+      position: relative;
+      gap: 0.125rem;
+      padding: 0.25rem;
+    }
 
-    .burger { display: flex; }
+    /* Affiche le burger menu */
+    .burger-toggle {
+      display: flex;
+    }
 
-    .nav__divider { display: none; }
+    /* Cache le séparateur sur mobile */
+    .header__separator {
+      display: none;
+    }
 
-    /* Hide links by default, show as dropdown */
-    .nav__links {
+    /* Menu déroulant mobile */
+    .header__links {
       position: absolute;
-      top: calc(100% + 0.625rem);
+      top: calc(100% + 0.5rem);
       left: 50%;
-      transform: translateX(-50%) translateY(-8px);
+      transform: translateX(-50%) translateY(-0.5rem);
+      min-width: max-content;
+      width: auto;
       flex-direction: column;
-      align-items: stretch;
       gap: 0;
-      min-width: 160px;
-      background: var(--nav-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--nav-border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-radius: 1rem;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -4px rgba(0, 0, 0, 0.1);
       overflow: hidden;
       opacity: 0;
       visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.25s var(--ease-out), transform 0.25s var(--ease-out), visibility 0.25s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .nav__links--open {
+    .header__links--open {
       opacity: 1;
       visibility: visible;
-      pointer-events: all;
       transform: translateX(-50%) translateY(0);
     }
 
-    .nav__link {
-      padding: 0.875rem 1.25rem;
-      border-radius: 0;
+    .header__link {
+      width: 100%;
+      padding: 1rem 1.5rem;
       font-size: 0.9375rem;
+      border-radius: 0;
+      text-align: left;
+      white-space: nowrap;
     }
 
-    .nav__link:not(:last-child) {
-      border-bottom: 1px solid var(--border);
+    .header__link:not(:last-child) {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .theme-toggle {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .theme-toggle__icon {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    /* Thème sombre - mobile */
+    :global([data-theme="dark"]) .header__links {
+      background: rgba(29, 29, 31, 0.95);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    :global([data-theme="dark"]) .header__link:not(:last-child) {
+      border-bottom-color: rgba(255, 255, 255, 0.1);
     }
   }
 </style>
